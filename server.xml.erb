@@ -9,7 +9,7 @@
 <% end -%>
   <vcpu><%= cpus %></vcpu>
   <os>
-    <type arch='<%= arch %>' machine='pc-q35-rhel7.6.0'><%= os_type %></type>
+    <type arch='<%= arch %>' machine='q35'><%= os_type %></type>
 <% boot_order.each do |dev| -%>
     <boot dev='<%= dev %>'/>
 <% end -%>
@@ -123,7 +123,7 @@ end
 -%>
     <graphics type='<%= display_type %>' port='<%= display_port %>' autoport='<%= autoport %>' <%= display_listen %> <%= display_password %> />
     <video>
-      <model type='qxl' ram='65536' vram='65536' vgamem='16384' heads='1' primary='yes'/>
+      <model type='qxl' heads='1'/>
     </video>
     <controller type="scsi" model="virtio-scsi">
       <address type="pci"/>
