@@ -1,0 +1,32 @@
+<%#
+kind: ptable
+name: Kickstart kubernetes node
+model: Ptable
+oses:
+- CentOS
+- Fedora
+- RedHat
+%>
+<%#
+This template accepts the following parameters:
+- boot-device: string (default="nvme0n1")
+%>
+<%
+  boot_device = host_param('boot-device') || 'nvme0n1'
+-%>
+
+zerombr
+clearpart --all --initlabel
+
+part /boot     --fstype="xfs"   --ondisk=<%= boot_device %> --size=1024
+part /boot/efi --fstype="efi"   --ondisk=<%= boot_device %> --size=200 --fsoptions="umask=0077,shortname=winnt"
+part pv.01     --fstype="lvmpv" --ondisk=<%= boot_device %> --grow
+
+volgroup k8s --pesize=4096 pv.01
+
+logvol /        --fstype="xfs"  --vgname=k8s --name=root    --size=8192
+logvol /home    --fstype="xfs"  --vgname=k8s --name=home    --size=1024
+logvol /var     --fstype="xfs"  --vgname=k8s --name=var     --size=10240 --grow
+logvol /var/log --fstype="xfs"  --vgname=k8s --name=var_log --size=8192
+logvol swap     --fstype="swap" --vgname=k8s --name=swap    --size=4096
+

@@ -1,0 +1,35 @@
+<%#
+kind: ptable
+name: Kickstart oVirt compute node
+model: Ptable
+oses:
+- CentOS
+- Fedora
+- RedHat
+%>
+<%#
+This template accepts the following parameters:
+- boot-device: string (default="nvme0n1")
+%>
+<%
+  boot_device = host_param('boot-device') || 'nvme0n1'
+-%>
+
+zerombr
+clearpart --all --initlabel
+
+part /boot     --fstype="xfs"   --ondisk=<%= boot_device %> --size=1024
+part /boot/efi --fstype="efi"   --ondisk=<%= boot_device %> --size=200 --fsoptions="umask=0077,shortname=winnt"
+part pv.01     --fstype="lvmpv" --ondisk=<%= boot_device %> --grow
+
+volgroup ovirt --pesize=4096 pv.01
+
+logvol /               --fstype="xfs"  --size=8192  --name=root          --vgname=ovirt
+logvol /home           --fstype="xfs"  --size=1024  --name=home          --vgname=ovirt
+logvol /tmp            --fstype="xfs"  --size=1024  --name=tmp           --vgname=ovirt
+logvol /var            --fstype="xfs"  --size=15360 --name=var           --vgname=ovirt
+logvol /var/crash      --fstype="xfs"  --size=10240 --name=var_crash     --vgname=ovirt
+logvol /var/log        --fstype="xfs"  --size=8192  --name=var_log       --vgname=ovirt
+logvol /var/log/audit  --fstype="xfs"  --size=2048  --name=var_log_audit --vgname=ovirt
+logvol swap            --fstype="swap" --size=4096  --name=swap          --vgname=ovirt
+

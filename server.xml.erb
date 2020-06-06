@@ -1,0 +1,135 @@
+<%# Modified to create Q35 machine w/ disk unmap & IOThreads -%>
+<domain type='<%= domain_type %>'>
+  <name><%= name %></name>
+  <memory><%= memory_size %></memory>
+<% if hugepages -%>
+  <memoryBacking>
+    <hugepages/>
+  </memoryBacking>
+<% end -%>
+  <vcpu><%= cpus %></vcpu>
+  <os>
+    <type arch='<%= arch %>' machine='pc-q35-rhel7.6.0'><%= os_type %></type>
+<% boot_order.each do |dev| -%>
+    <boot dev='<%= dev %>'/>
+<% end -%>
+  </os>
+  <features>
+    <acpi/>
+    <apic/>
+    <pae/>
+  </features>
+<% if !cpu.empty? -%>
+<% if cpu[:mode] -%>
+  <cpu mode='<%= cpu[:mode] %>'>
+<% else -%>
+  <cpu>
+<% end -%>
+<%
+  fallback = 'allow'
+  model = ''
+  if cpu[:model]
+    fallback = cpu[:model][:fallback] if cpu[:model][:fallback]
+    model    = cpu[:model][:name]     if cpu[:model][:name]
+  end
+-%>
+    <model fallback='<%= fallback %>'><%= model %></model>
+  </cpu>
+<% end -%>
+  <clock offset='utc'/>
+  <devices>
+<% args = {}
+   if File.file?('/etc/foreman/ceph.conf')
+     File.readlines('/etc/foreman/ceph.conf').each do |line|
+       pair = line.strip.split("=")
+       key = pair[0]
+       value = pair[1]
+       args[key] = value
+     end
+   end
+%>
+<% volumes.each do |vol| -%>
+  <% if File.file?('/etc/foreman/ceph.conf') && vol.pool_name.include?(args["libvirt_ceph_pool"]) %>
+    <disk type='network' device='disk'>
+      <driver name='qemu' type='<%= vol.format_type %>' cache='writeback' discard='unmap'/>
+      <source protocol='rbd' name='<%= vol.path %>'>
+        <% args["monitor"].split(",").each do |mon| %>
+        <host name='<%= mon %>' port='<%= args["port"] %>'/>
+        <% end %>
+      </source>
+      <auth username='<%= args["auth_username"] %>'>
+       <% if args.key?("auth_uuid") -%>
+        <secret type='ceph' uuid='<%= args["auth_uuid"] %>'/>
+       <% else -%>
+        <secret type='ceph' usage='<%= args["auth_usage"] %>'/>
+       <% end -%>
+      </auth>
+      <target dev='sd<%= ('a'..'y').to_a[volumes.index(vol)] %>' bus='scsi'/>
+    </disk>
+  <% else %>
+    <disk type='file' device='disk'>
+      <driver name='qemu' type='<%= vol.format_type %>' discard="unmap"/>
+      <source file='<%= vol.path %>'/>
+      <%# we need to ensure a unique target dev -%>
+      <target dev='sd<%= ('a'..'y').to_a[volumes.index(vol)] %>' bus='scsi'/>
+    </disk>
+  <% end %>
+<% end -%>
+<% if iso_file -%>
+    <disk type='file' device='cdrom'>
+      <driver name='qemu' type='raw'/>
+      <source file='<%= "#{iso_dir}/#{iso_file}" %>'/>
+      <target dev='sdz' bus='sata'/>
+      <readonly/>
+    </disk>
+<% end -%>
+<% nics.each do |nic| -%>
+    <interface type='<%= nic.type %>'>
+      <source <%= nic.type == 'bridge' ? "bridge='#{nic.bridge}'" : "network='#{nic.network}'" %> />
+      <model type='<%= nic.model %>'/>
+    </interface>
+<% end -%>
+<% if guest_agent -%>
+    <channel type='unix'>
+      <target type='virtio' name='org.qemu.guest_agent.0'/>
+    </channel>
+<% end -%>
+    <serial type='pty'>
+      <target port='0'/>
+    </serial>
+    <console type='pty'>
+      <target port='0'/>
+    </console>
+    <input type='tablet' bus='usb'/>
+    <input type='mouse' bus='ps2'/>
+<%
+display_type = display[:type]
+
+if display[:port].empty?
+  display_port = display[:port]
+  autoport = 'no'
+else
+  display_port = '-1'
+  autoport = 'yes'
+end
+
+unless display[:listen].empty?
+  display_listen = "listen='#{display[:listen]}'"
+end
+
+unless display[:password].empty?
+  display_password = "passwd='#{display[:password]}'"
+end
+-%>
+    <graphics type='<%= display_type %>' port='<%= display_port %>' autoport='<%= autoport %>' <%= display_listen %> <%= display_password %> />
+    <video>
+      <model type='qxl' ram='65536' vram='65536' vgamem='16384' heads='1' primary='yes'/>
+    </video>
+    <controller type="scsi" model="virtio-scsi">
+      <address type="pci"/>
+    </controller>
+    <controller type="sata">
+      <address type="pci"/>
+    </controller>
+  </devices>
+</domain>

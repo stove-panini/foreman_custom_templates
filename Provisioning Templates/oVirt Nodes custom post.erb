@@ -1,0 +1,30 @@
+<%#
+kind: snippet
+name: oVirt Nodes custom post
+model: ProvisioningTemplate
+oses:
+- CentOS
+%>
+<%#
+This template accepts the following parameters:
+- bootstrap_host: boolean (default=false)
+Only valid for bootstrap host:
+- install_appliance: boolean (default=false)
+%>
+<%
+  pkgs = []
+  if host_param('bootstrap_host')
+    pkgs << 'gluster-ansible-roles'
+    if host_param('install_appliance')
+      pkgs << 'ovirt-engine-appliance'
+    end
+  end
+
+  bootstrap_host_pkgs = pkgs.join(' ')
+%>
+
+dnf install -y https://resources.ovirt.org/pub/yum-repo/ovirt-release44.rpm
+dnf install -y cockpit cockpit-ovirt-dashboard vdsm-gluster <%= bootstrap_host_pkgs %>
+
+dnf update -y
+
