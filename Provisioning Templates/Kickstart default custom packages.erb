@@ -4,6 +4,6 @@ name: Kickstart default custom packages
 model: ProvisioningTemplate
 snippet: true
 -%>
-<% if os_major == 8 -%>
+<% if @host.operatingsystem.major.to_i == 8 -%>
 @^server-product-environment
 <% end -%>
