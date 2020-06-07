@@ -13,7 +13,7 @@ This template accepts the following parameters:
 - ssh_authorized_keys: string w newline seperated keys (default="")
 - package_upgrade: boolean (default=false)
 - freeipa_getcert: boolean (default=false)
-- enable_epel: boolean (default=false)
+- enable-epel: boolean (default=false)
 - reboot: boolean (default=false)
 -%>
 
@@ -58,7 +58,7 @@ runcmd:
 <% end -%>
 
 <%# Enable EPEL -%>
-<% if host_param_true?('enable_epel') -%>
+<% if host_param_true?('enable-epel') -%>
 - |
 <%= indent(2) { snippet('epel') } %>
 <% end -%>
