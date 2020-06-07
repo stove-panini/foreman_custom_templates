@@ -1,0 +1,9 @@
+<%#
+kind: snippet
+name: Kickstart default custom packages
+model: ProvisioningTemplate
+snippet: true
+-%>
+<% if os_major == 8 -%>
+@^server-product-environment
+<% end -%>
