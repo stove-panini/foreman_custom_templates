@@ -7,3 +7,6 @@ snippet: true
 <% if @host.operatingsystem.major.to_i == 8 -%>
 @^server-product-environment
 <% end -%>
+<% if host_param_true?('GNOME') -%>
+@^graphical-server-environment
+<% end -%>
