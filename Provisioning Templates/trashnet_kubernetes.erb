@@ -1,0 +1,22 @@
+<%#
+kind: snippet
+name: trashnet_kubernetes
+model: ProvisioningTemplate
+snippet: true
+-%>
+# Install Docker
+yum install -y yum-utils
+yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+yum install docker-ce docker-ce-cli containerd.io
+systemctl enable --now docker
+
+# Install iSCSI tools for Longhorn
+yum install -y iscsi-initiator-utils
+systemctl enable --now iscsid
+
+# Setup Longhorn disk
+yum install -y util-linux
+echo 'type=83' | sfdisk /dev/sdb
+mkfs.xfs /dev/sdb1
+mkdir -p /var/lib/longhorn
+echo "/dev/sdb1 /var/lib/longhorn xfs defaults 0 0" >>/etc/fstab
