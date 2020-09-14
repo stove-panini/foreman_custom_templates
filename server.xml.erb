@@ -64,14 +64,14 @@
         <secret type='ceph' usage='<%= args["auth_usage"] %>'/>
        <% end -%>
       </auth>
-      <target dev='sd<%= ('a'..'y').to_a[volumes.index(vol)] %>' bus='scsi'/>
+      <target dev='sd<%= ('b'..'z').to_a[volumes.index(vol)] %>' bus='scsi'/>
     </disk>
   <% else %>
     <disk type='file' device='disk'>
-      <driver name='qemu' type='<%= vol.format_type %>' discard="unmap"/>
+      <driver name='qemu' type='<%= vol.format_type %>' io="threads" discard="unmap"/>
       <source file='<%= vol.path %>'/>
       <%# we need to ensure a unique target dev -%>
-      <target dev='sd<%= ('a'..'y').to_a[volumes.index(vol)] %>' bus='scsi'/>
+      <target dev='sd<%= ('b'..'z').to_a[volumes.index(vol)] %>' bus='scsi'/>
     </disk>
   <% end %>
 <% end -%>
@@ -79,7 +79,7 @@
     <disk type='file' device='cdrom'>
       <driver name='qemu' type='raw'/>
       <source file='<%= "#{iso_dir}/#{iso_file}" %>'/>
-      <target dev='sdz' bus='sata'/>
+      <target dev='sda' bus='sata'/>
       <readonly/>
     </disk>
 <% end -%>
